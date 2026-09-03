@@ -1,33 +1,24 @@
-# Dockerfile for Revenue Recovery AI Agent (Python backend)
+FROM python:3.11-slim
 
-# ---------- Build stage ----------
-FROM python:3.11-slim AS builder
 WORKDIR /app
 
-# Install uv (Python package manager)
-RUN pip install --no-cache-dir uv
+# System dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY pyproject.toml uv.lock ./
-COPY expense_agent/ ./expense_agent/
+# Install Python dependencies
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir .
 
-# Install dependencies without dev packages
-RUN uv sync --frozen --no-dev
+# Copy backend
+COPY app/ ./app/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
 
-# ---------- Runtime stage ----------
-FROM python:3.11-slim AS runner
-WORKDIR /app
+# Render provides PORT automatically
 ENV PYTHONUNBUFFERED=1
 
-# Copy installed packages from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH="/root/.local/bin:$PATH"
-
-# Copy application code
-COPY --from=builder /app/expense_agent ./expense_agent
-
-# Expose the FastAPI service port
-EXPOSE 8080
-
-# Run the FastAPI application via uv
-CMD ["uv", "run", "python", "expense_agent/fast_api_app.py"]
+CMD ["sh", "-c", "python -m alembic upgrade head && uvicorn app.fastapi_server:app --host 0.0.0.0 --port ${PORT:-8001}"]
