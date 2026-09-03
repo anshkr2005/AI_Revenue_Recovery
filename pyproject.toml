@@ -1,0 +1,27 @@
+[project]
+name = "revenueos-ai"
+version = "0.1.0"
+description = "AI-powered revenue risk analysis and recovery platform using Groq"
+requires-python = ">=3.11"
+
+dependencies = [
+    "python-dotenv",
+    "fastapi",
+    "uvicorn[standard]",
+    "streamlit",
+    "pandas",
+    "plotly",
+    "psutil",
+    "mcp>=0.1.0",
+    "groq",
+    "sqlalchemy>=2.0",
+    "psycopg2-binary>=2.9",
+    "alembic>=1.16",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
